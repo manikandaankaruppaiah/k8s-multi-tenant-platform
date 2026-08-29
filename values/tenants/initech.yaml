@@ -1,0 +1,12 @@
+frontend:
+  replicaCount: 1
+  extraEnv:
+    - name: TENANT_NAME
+      value: initech
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+loadGenerator:
+  create: false
