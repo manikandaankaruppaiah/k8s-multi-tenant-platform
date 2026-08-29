@@ -1,6 +1,6 @@
 CLUSTER_NAME := k8s-multi-tenant-platform
 
-.PHONY: up down argocd deploy
+.PHONY: up down argocd deploy security
 
 up:
 	kind create cluster --name $(CLUSTER_NAME) --config kind-config.yaml
@@ -16,3 +16,8 @@ argocd:
 
 deploy:
 	kubectl apply -f argocd/applicationset.yaml
+
+security:
+	kubectl apply -f security/namespaces/
+	kubectl apply -f security/network-policies/
+	kubectl apply -f security/rbac/
