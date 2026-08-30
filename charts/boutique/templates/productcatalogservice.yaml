@@ -92,9 +92,13 @@ spec:
         - name: EXTRA_LATENCY
           value: {{ .Values.productCatalogService.extraLatency }}
         readinessProbe:
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
           grpc:
             port: 3550
         livenessProbe:
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
           grpc:
             port: 3550
         resources:

@@ -96,6 +96,13 @@ spec:
         env:
         - name: FRONTEND_ADDR
           value: "{{ .Values.frontend.name }}:80"
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 50m
+            memory: 32Mi
       {{- end }}
       containers:
       - name: main

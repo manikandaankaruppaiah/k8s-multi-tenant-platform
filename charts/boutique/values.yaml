@@ -53,7 +53,9 @@ googleCloudOperations:
   metrics: false
 
 seccompProfile:
-  enable: false
+  # Enabled by default so pods pass Pod Security Standards "restricted"
+  # namespaces out of the box (they require seccompProfile.type=RuntimeDefault).
+  enable: true
   type: RuntimeDefault
 
 securityContext:
@@ -126,6 +128,13 @@ frontend:
   #     - name: TENANT_NAME
   #       value: acme
   extraEnv: []
+  # Service type for the frontend-external Service. Custom hook added on top
+  # of the upstream chart: defaults to ClusterIP because this platform targets
+  # local kind clusters with no cloud LoadBalancer controller, so a hardcoded
+  # LoadBalancer type would leave the Service (and ArgoCD's health check)
+  # stuck Pending/Progressing forever. Override per-environment if a real LB
+  # is available.
+  externalServiceType: ClusterIP
   externalService: true
   cymbalBranding: false
   # One of: local, gcp, aws, azure, onprem, alibaba. When not set, defaults to "local" unless running in GKE, otherwise auto-sets to gcp.

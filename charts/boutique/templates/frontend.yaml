@@ -161,7 +161,7 @@ metadata:
   name: {{ .Values.frontend.name }}-external
   namespace: {{ .Release.Namespace }}
 spec:
-  type: LoadBalancer
+  type: {{ .Values.frontend.externalServiceType | default "ClusterIP" }}
   selector:
     app: {{ .Values.frontend.name }}
   ports:

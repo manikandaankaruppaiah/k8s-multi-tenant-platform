@@ -90,9 +90,13 @@ spec:
           value: "1"
         {{- end }}
         readinessProbe:
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
           grpc:
             port: 50051
         livenessProbe:
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
           grpc:
             port: 50051
         resources:

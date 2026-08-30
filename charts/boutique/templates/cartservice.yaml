@@ -259,10 +259,14 @@ spec:
         ports:
         - containerPort: 6379
         readinessProbe:
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
           periodSeconds: 5
           tcpSocket:
             port: 6379
         livenessProbe:
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
           periodSeconds: 5
           tcpSocket:
             port: 6379
