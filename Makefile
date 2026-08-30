@@ -1,6 +1,6 @@
 CLUSTER_NAME := k8s-multi-tenant-platform
 
-.PHONY: up down argocd deploy security
+.PHONY: up down argocd deploy security kyverno
 
 up:
 	kind create cluster --name $(CLUSTER_NAME) --config kind-config.yaml
@@ -21,3 +21,9 @@ security:
 	kubectl apply -f security/namespaces/
 	kubectl apply -f security/network-policies/
 	kubectl apply -f security/rbac/
+
+kyverno:
+	helm repo add kyverno https://kyverno.github.io/kyverno/ --force-update
+	helm repo update
+	helm upgrade --install kyverno kyverno/kyverno -n kyverno --create-namespace --wait
+	kubectl apply -f security/kyverno-policies/
