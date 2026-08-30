@@ -37,7 +37,7 @@ dashboards:
 		--dry-run=client -o yaml | kubectl label -f - --local -o yaml grafana_dashboard=1 | kubectl apply -f -
 	kubectl apply -f observability/alerts/boutique-alerts.yaml
 
-observability: dashboards
+observability:
 	helm repo add prometheus-community https://prometheus-community.github.io/helm-charts --force-update
 	helm repo add grafana https://grafana.github.io/helm-charts --force-update
 	helm repo update
@@ -45,3 +45,4 @@ observability: dashboards
 		-n observability --create-namespace -f observability/install/kube-prometheus-stack-values.yaml --wait --timeout 10m
 	helm upgrade --install loki grafana/loki \
 		-n observability -f observability/install/loki-values.yaml --wait --timeout 10m
+	$(MAKE) dashboards
