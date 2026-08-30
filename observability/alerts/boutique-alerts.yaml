@@ -1,0 +1,27 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: boutique-alerts
+  namespace: observability
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: boutique.rules
+      rules:
+        - alert: TenantPodCrashLooping
+          expr: increase(kube_pod_container_status_restarts_total{namespace=~"tenant-.*"}[15m]) > 3
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pod {{ $labels.pod }} in {{ $labels.namespace }} is crash-looping"
+        - alert: TenantHighMemoryUsage
+          # 838860800 bytes == 800Mi (PromQL number literals don't support Ki/Mi/Gi suffixes,
+          # unlike Kubernetes resource quantities, so the threshold is expressed in raw bytes)
+          expr: sum by (namespace) (container_memory_working_set_bytes{namespace=~"tenant-.*"}) > 838860800
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Namespace {{ $labels.namespace }} memory usage is high"

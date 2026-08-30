@@ -1,6 +1,6 @@
 CLUSTER_NAME := k8s-multi-tenant-platform
 
-.PHONY: up down argocd deploy security kyverno observability
+.PHONY: up down argocd deploy security kyverno observability dashboards
 
 up:
 	kind create cluster --name $(CLUSTER_NAME) --config kind-config.yaml
@@ -28,7 +28,16 @@ kyverno:
 	helm upgrade --install kyverno kyverno/kyverno -n kyverno --create-namespace --wait
 	kubectl apply -f security/kyverno-policies/
 
-observability:
+dashboards:
+	kubectl -n observability create configmap tenant-red-metrics-dashboard \
+		--from-file=tenant-red-metrics.json=observability/dashboards/tenant-red-metrics.json \
+		--dry-run=client -o yaml | kubectl label -f - --local -o yaml grafana_dashboard=1 | kubectl apply -f -
+	kubectl -n observability create configmap pod-resource-usage-dashboard \
+		--from-file=pod-resource-usage.json=observability/dashboards/pod-resource-usage.json \
+		--dry-run=client -o yaml | kubectl label -f - --local -o yaml grafana_dashboard=1 | kubectl apply -f -
+	kubectl apply -f observability/alerts/boutique-alerts.yaml
+
+observability: dashboards
 	helm repo add prometheus-community https://prometheus-community.github.io/helm-charts --force-update
 	helm repo add grafana https://grafana.github.io/helm-charts --force-update
 	helm repo update

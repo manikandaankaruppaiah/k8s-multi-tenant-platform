@@ -1,0 +1,27 @@
+{
+  "title": "Pod Resource Usage",
+  "uid": "pod-resource-usage",
+  "tags": ["tenant", "resources"],
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "CPU usage per tenant namespace",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum by (namespace) (rate(container_cpu_usage_seconds_total{namespace=~\"tenant-.*\"}[5m]))"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Memory usage per tenant namespace",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum by (namespace) (container_memory_working_set_bytes{namespace=~\"tenant-.*\"})"
+        }
+      ]
+    }
+  ]
+}
