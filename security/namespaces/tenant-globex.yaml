@@ -13,8 +13,17 @@ metadata:
   namespace: tenant-globex
 spec:
   hard:
-    requests.cpu: "1"
-    requests.memory: 1Gi
-    limits.cpu: "2"
-    limits.memory: 2Gi
+    # Sized from the boutique chart's default per-service resource requests
+    # (11 services: ad, cart, checkout, currency, email, frontend, payment,
+    # productcatalog, recommendation, shipping, redis-cart, plus loadgenerator
+    # on tenants that enable it): summed baseline is ~1.6 CPU / ~1.7Gi memory
+    # requests and ~3 CPU / ~3Gi memory limits per full tenant stack. Quota
+    # below applies ~2x headroom over that baseline so rolling updates (which
+    # transiently run old+new ReplicaSet pods together) don't get stuck on
+    # quota. Kept identical across all three tenants since the chart's
+    # per-service footprint doesn't vary by tenant.
+    requests.cpu: "4"
+    requests.memory: 4Gi
+    limits.cpu: "6"
+    limits.memory: 6Gi
     pods: "20"
