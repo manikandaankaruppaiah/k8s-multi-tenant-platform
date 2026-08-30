@@ -1,6 +1,6 @@
 CLUSTER_NAME := k8s-multi-tenant-platform
 
-.PHONY: up down argocd deploy security kyverno observability dashboards
+.PHONY: up down argocd deploy security kyverno observability dashboards smoke-test
 
 up:
 	kind create cluster --name $(CLUSTER_NAME) --config kind-config.yaml
@@ -46,3 +46,7 @@ observability:
 	helm upgrade --install loki grafana/loki \
 		-n observability -f observability/install/loki-values.yaml --wait --timeout 10m
 	$(MAKE) dashboards
+
+smoke-test:
+	chmod +x scripts/smoke-test.sh
+	./scripts/smoke-test.sh
