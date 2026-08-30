@@ -66,6 +66,7 @@ spec:
       - name: otel-gateway-init
         securityContext:
           allowPrivilegeEscalation: false
+          runAsNonRoot: true
           capabilities:
             drop:
               - ALL
@@ -89,6 +90,7 @@ spec:
       - name: otel-gateway
         securityContext:
           allowPrivilegeEscalation: false
+          runAsNonRoot: true
           capabilities:
             drop:
               - ALL
