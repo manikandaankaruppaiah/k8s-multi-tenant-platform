@@ -1,6 +1,6 @@
 CLUSTER_NAME := k8s-multi-tenant-platform
 
-.PHONY: up down argocd deploy security kyverno
+.PHONY: up down argocd deploy security kyverno observability
 
 up:
 	kind create cluster --name $(CLUSTER_NAME) --config kind-config.yaml
@@ -27,3 +27,12 @@ kyverno:
 	helm repo update
 	helm upgrade --install kyverno kyverno/kyverno -n kyverno --create-namespace --wait
 	kubectl apply -f security/kyverno-policies/
+
+observability:
+	helm repo add prometheus-community https://prometheus-community.github.io/helm-charts --force-update
+	helm repo add grafana https://grafana.github.io/helm-charts --force-update
+	helm repo update
+	helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+		-n observability --create-namespace -f observability/install/kube-prometheus-stack-values.yaml --wait --timeout 10m
+	helm upgrade --install loki grafana/loki \
+		-n observability -f observability/install/loki-values.yaml --wait --timeout 10m

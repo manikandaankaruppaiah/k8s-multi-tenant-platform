@@ -1,0 +1,54 @@
+# NOTE: chart version pinned at install time was grafana/loki 7.3.0.
+# As of loki chart v6+, the chart defaults to `deploymentMode: SimpleScalable`
+# (separate read/write/backend components) and `loki.storage.type: s3`.
+# The brief's original values (singleBinary + filesystem, no deploymentMode key)
+# match an older chart's default deployment mode and would leave the single
+# binary at 0 replicas while an S3 storage config with no bucket fails to
+# start. To preserve the intended single-node/filesystem deployment on the
+# currently-resolved chart version, `deploymentMode: SingleBinary` is added
+# explicitly, `loki.storage.type` is set to `filesystem`, and the
+# SimpleScalable-mode components (read/write/backend) are scaled to 0
+# replicas since the chart refuses to render with both single-binary and
+# simple-scalable targets active at once. Finally, this chart version no
+# longer ships a default schema_config, so one is set explicitly here
+# (tsdb index over filesystem storage, the chart's own recommended schema
+# for non-object-storage deployments).
+# This chart version also enables standalone memcached-based chunksCache
+# and resultsCache StatefulSets by default. chunksCache in particular
+# defaults to an 8192Mi `allocatedMemory`, which renders as a ~9.8Gi pod
+# memory request/limit that alone exceeds a kind node's entire allocatable
+# memory (observed: pod stuck Pending with "Insufficient memory"). This
+# conflicts with the brief's "low resource requests" intent for a local
+# single-node demo, so both caches are disabled here — Loki still functions
+# correctly without them for a low-volume single-node deployment.
+deploymentMode: SingleBinary
+loki:
+  commonConfig:
+    replication_factor: 1
+  storage:
+    type: filesystem
+  schemaConfig:
+    configs:
+      - from: "2024-04-01"
+        store: tsdb
+        object_store: filesystem
+        schema: v13
+        index:
+          prefix: loki_index_
+          period: 24h
+singleBinary:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+read:
+  replicas: 0
+write:
+  replicas: 0
+backend:
+  replicas: 0
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false
