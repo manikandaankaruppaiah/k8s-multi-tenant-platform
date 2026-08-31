@@ -87,12 +87,15 @@ spec:
         resources:
           {{- toYaml .Values.cartService.resources | nindent 10 }}
         readinessProbe:
-          initialDelaySeconds: 15
+          initialDelaySeconds: 30
+          timeoutSeconds: 10
+          periodSeconds: 15
           grpc:
             port: 7070
         livenessProbe:
-          initialDelaySeconds: 15
-          periodSeconds: 10
+          initialDelaySeconds: 30
+          timeoutSeconds: 10
+          periodSeconds: 15
           grpc:
             port: 7070
 ---
