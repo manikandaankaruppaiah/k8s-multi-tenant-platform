@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.16.2
+
+      - name: Helm lint
+        run: make lint
+
+      - name: Install kubeconform
+        run: |
+          curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.8.0/kubeconform-linux-amd64.tar.gz | tar xz
+          sudo mv kubeconform /usr/local/bin/
+
+      - name: Validate rendered manifests
+        run: |
+          helm template acme charts/boutique -f values/tenants/acme.yaml | kubeconform -summary -ignore-missing-schemas
+
+      - name: Validate raw manifests
+        run: |
+          kubeconform -summary -ignore-missing-schemas security/namespaces/*.yaml security/network-policies/*.yaml security/rbac/*.yaml security/kyverno-policies/*.yaml argocd/applicationset.yaml
+
+  smoke-test:
+    runs-on: ubuntu-latest
+    needs: lint-and-validate
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1.14.0
+        with:
+          cluster_name: k8s-multi-tenant-platform
+          config: kind-config.yaml
+
+      - name: Install ArgoCD
+        run: make argocd
+
+      - name: Apply security baseline
+        run: make security
+
+      # --- CI-only single-tenant scoping -----------------------------------
+      # Standard GitHub-hosted runners are 2 vCPU / 7GB RAM. One tenant's real
+      # measured usage (~1.6-2 CPU, ~1.7-2Gi) fits a runner; all three tenants
+      # together (~5-6 CPU) would leave pods Pending indefinitely and fail CI.
+      #
+      # The committed argocd/applicationset.yaml intentionally stays a 3-tenant
+      # ApplicationSet (that's the real/local demo, already verified end-to-end
+      # against a full-size cluster) - it is never edited here. Instead we
+      # render a CI-local copy with the generator's tenant list trimmed to just
+      # "acme" and apply that temp file, plus point it at this run's commit so
+      # ArgoCD syncs the code under test rather than main.
+      - name: Render single-tenant ApplicationSet for CI
+        run: |
+          yq eval '
+            .spec.generators[0].list.elements = [{"tenant": "acme"}] |
+            .spec.template.spec.source.repoURL = "https://github.com/${{ github.repository }}.git" |
+            .spec.template.spec.source.targetRevision = "${{ github.sha }}"
+          ' argocd/applicationset.yaml > /tmp/applicationset-ci.yaml
+          cat /tmp/applicationset-ci.yaml
+
+      - name: Deploy acme tenant only
+        run: kubectl apply -f /tmp/applicationset-ci.yaml
+
+      - name: Wait for sync
+        run: sleep 90
+
+      - name: Run smoke test (acme only)
+        env:
+          TENANTS: acme
+        run: make smoke-test

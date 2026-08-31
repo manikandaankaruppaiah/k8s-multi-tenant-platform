@@ -1,6 +1,6 @@
 CLUSTER_NAME := k8s-multi-tenant-platform
 
-.PHONY: up down argocd deploy security kyverno observability dashboards smoke-test
+.PHONY: up down argocd deploy security kyverno observability dashboards smoke-test lint
 
 up:
 	kind create cluster --name $(CLUSTER_NAME) --config kind-config.yaml
@@ -50,3 +50,9 @@ observability:
 smoke-test:
 	chmod +x scripts/smoke-test.sh
 	./scripts/smoke-test.sh
+
+lint:
+	helm dependency update charts/boutique
+	helm lint charts/boutique -f values/tenants/acme.yaml
+	helm lint charts/boutique -f values/tenants/globex.yaml
+	helm lint charts/boutique -f values/tenants/initech.yaml
