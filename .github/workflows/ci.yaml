@@ -11,6 +11,7 @@ permissions:
 jobs:
   lint-and-validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -37,6 +38,7 @@ jobs:
   smoke-test:
     runs-on: ubuntu-latest
     needs: lint-and-validate
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -62,13 +64,15 @@ jobs:
       # against a full-size cluster) - it is never edited here. Instead we
       # render a CI-local copy with the generator's tenant list trimmed to just
       # "acme" and apply that temp file, plus point it at this run's commit so
-      # ArgoCD syncs the code under test rather than main.
+      # ArgoCD syncs the code under test rather than main. On pull_request events
+      # github.sha is a synthetic merge commit that does not exist on the remote,
+      # so use the PR head SHA (and head repo, for fork PRs) instead.
       - name: Render single-tenant ApplicationSet for CI
         run: |
           yq eval '
             .spec.generators[0].list.elements = [{"tenant": "acme"}] |
-            .spec.template.spec.source.repoURL = "https://github.com/${{ github.repository }}.git" |
-            .spec.template.spec.source.targetRevision = "${{ github.sha }}"
+            .spec.template.spec.source.repoURL = "https://github.com/${{ github.event.pull_request.head.repo.full_name || github.repository }}.git" |
+            .spec.template.spec.source.targetRevision = "${{ github.event.pull_request.head.sha || github.sha }}"
           ' argocd/applicationset.yaml > /tmp/applicationset-ci.yaml
           cat /tmp/applicationset-ci.yaml
 
@@ -76,9 +80,30 @@ jobs:
         run: kubectl apply -f /tmp/applicationset-ci.yaml
 
       - name: Wait for sync
-        run: sleep 90
+        run: |
+          echo "Waiting for Application boutique-acme to exist..."
+          for i in $(seq 1 60); do
+            kubectl get application boutique-acme -n argocd >/dev/null 2>&1 && break
+            sleep 5
+          done
+          kubectl get application boutique-acme -n argocd >/dev/null 2>&1 \
+            || { echo "ERROR: Application boutique-acme was never created"; exit 1; }
+          kubectl wait --for=jsonpath='{.status.sync.status}'=Synced application/boutique-acme -n argocd --timeout=15m \
+            || { echo "ERROR: boutique-acme did not reach Synced within 15m"; exit 1; }
+          kubectl wait --for=jsonpath='{.status.health.status}'=Healthy application/boutique-acme -n argocd --timeout=15m \
+            || { echo "ERROR: boutique-acme did not reach Healthy within 15m"; exit 1; }
 
       - name: Run smoke test (acme only)
         env:
           TENANTS: acme
         run: make smoke-test
+
+      - name: Dump diagnostics
+        if: failure()
+        run: |
+          kubectl get applications -n argocd -o wide || true
+          kubectl describe application boutique-acme -n argocd || true
+          kubectl get pods -A || true
+          kubectl get events -n tenant-acme --sort-by=.lastTimestamp | tail -50 || true
+          kubectl logs -n argocd deploy/argocd-repo-server --tail=100 || true
+          kubectl logs -n argocd deploy/argocd-applicationset-controller --tail=100 || true

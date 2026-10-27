@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Defaults to all three tenants; override with e.g. `TENANTS=acme ./scripts/smoke-test.sh`
 # (used by CI, which only deploys the "acme" tenant to stay within runner capacity).
-TENANTS=(${TENANTS:-acme globex initech})
+read -ra TENANTS <<< "${TENANTS:-acme globex initech}"
 FAILED=0
 
 echo "== Checking ArgoCD Application health =="
