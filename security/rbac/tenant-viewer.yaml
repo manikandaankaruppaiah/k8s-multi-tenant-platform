@@ -1,0 +1,89 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tenant-viewer
+  namespace: tenant-acme
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "configmaps"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tenant-viewer
+  namespace: tenant-acme
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tenant-viewer
+  namespace: tenant-acme
+subjects:
+  - kind: ServiceAccount
+    name: tenant-viewer
+    namespace: tenant-acme
+roleRef:
+  kind: Role
+  name: tenant-viewer
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tenant-viewer
+  namespace: tenant-globex
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "configmaps"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tenant-viewer
+  namespace: tenant-globex
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tenant-viewer
+  namespace: tenant-globex
+subjects:
+  - kind: ServiceAccount
+    name: tenant-viewer
+    namespace: tenant-globex
+roleRef:
+  kind: Role
+  name: tenant-viewer
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tenant-viewer
+  namespace: tenant-initech
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "configmaps"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tenant-viewer
+  namespace: tenant-initech
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tenant-viewer
+  namespace: tenant-initech
+subjects:
+  - kind: ServiceAccount
+    name: tenant-viewer
+    namespace: tenant-initech
+roleRef:
+  kind: Role
+  name: tenant-viewer
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,27 @@
+{
+  "title": "Tenant RED Metrics",
+  "uid": "tenant-red-metrics",
+  "tags": ["tenant", "red"],
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Frontend request rate (network receive bytes, per tenant)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum by (namespace) (rate(container_network_receive_bytes_total{namespace=~\"tenant-.*\", pod=~\"frontend.*\"}[5m]))"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Frontend container restarts (error proxy, per tenant)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum by (namespace) (increase(kube_pod_container_status_restarts_total{namespace=~\"tenant-.*\", pod=~\"frontend.*\"}[15m]))"
+        }
+      ]
+    }
+  ]
+}

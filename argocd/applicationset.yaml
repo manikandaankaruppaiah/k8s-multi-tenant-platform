@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: boutique-tenants
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - tenant: acme
+          - tenant: globex
+          - tenant: initech
+  template:
+    metadata:
+      name: "boutique-{{tenant}}"
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/manikandaankaruppaiah/k8s-multi-tenant-platform.git
+        targetRevision: main
+        path: charts/boutique
+        helm:
+          valueFiles:
+            - "../../values/tenants/{{tenant}}.yaml"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "tenant-{{tenant}}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

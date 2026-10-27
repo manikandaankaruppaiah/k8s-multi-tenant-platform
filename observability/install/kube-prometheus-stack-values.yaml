@@ -1,0 +1,13 @@
+grafana:
+  adminPassword: admin
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+prometheus:
+  prometheusSpec:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+    ruleSelectorNilUsesHelmValues: false

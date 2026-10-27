@@ -1,0 +1,9 @@
+frontend:
+  replicaCount: 2
+  extraEnv:
+    - name: TENANT_NAME
+      value: acme
+  resources:
+    requests:
+      cpu: 75m
+      memory: 96Mi
