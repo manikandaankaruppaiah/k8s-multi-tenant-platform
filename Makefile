@@ -56,3 +56,10 @@ lint:
 	helm lint charts/boutique -f values/tenants/acme.yaml
 	helm lint charts/boutique -f values/tenants/globex.yaml
 	helm lint charts/boutique -f values/tenants/initech.yaml
+
+.PHONY: demo
+
+demo: up argocd security kyverno deploy observability
+	@echo "Waiting for ArgoCD to sync tenants..."
+	sleep 90
+	$(MAKE) smoke-test
